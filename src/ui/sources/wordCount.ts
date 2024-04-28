@@ -8,6 +8,7 @@ import { DEFAULT_WORDS_PER_DOT } from "src/constants";
 
 import { dailyNotes, settings, weeklyNotes } from "../stores";
 import { clamp, getWordCount } from "../utils";
+import { getAllTags } from "obsidian";
 
 const NUM_MAX_DOTS = 5;
 
@@ -21,6 +22,18 @@ export async function getWordLengthAsDots(note: TFile): Promise<number> {
   const wordCount = getWordCount(fileContents);
   const numDots = wordCount / wordsPerDot;
   return clamp(Math.floor(numDots), 1, NUM_MAX_DOTS);
+}
+
+export async function isNoteHasSpecifiedTag(note: TFile | null, tag: string): Promise<boolean> {
+  if (!note || !tag) {
+    return false;
+  }
+
+  const fileCache = await globalThis.app.metadataCache.getFileCache(note);
+  const tags = getAllTags(fileCache)
+  // console.log(tags);
+
+  return tags.some(t => t === tag)
 }
 
 export async function getDotsForDailyNote(
@@ -38,6 +51,16 @@ export async function getDotsForDailyNote(
       isFilled: true,
     });
   }
+
+  //TODO: get tag value from settings
+  const noteHasSpecifiedTag = await isNoteHasSpecifiedTag(dailyNote, '#идея')
+
+  if (noteHasSpecifiedTag) {
+    dots.unshift({
+      className: "idea",
+    })
+  }
+
   return dots;
 }
 
