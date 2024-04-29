@@ -25,6 +25,7 @@ export async function getWordLengthAsDots(note: TFile): Promise<number> {
 }
 
 export async function isNoteHasSpecifiedTag(note: TFile | null, tag: string): Promise<boolean> {
+  //TODO: передавать в функцию готовый cacheMetadata вместо файла, чтоб не вызывать тот же кеш лишний раз
   if (!note || !tag) {
     return false;
   }
@@ -34,6 +35,45 @@ export async function isNoteHasSpecifiedTag(note: TFile | null, tag: string): Pr
   // console.log(tags);
 
   return tags.some(t => t === tag)
+}
+
+export async function isSpecifiedHeadingSectionHasContent(note: TFile, headingName: string): Promise<boolean> {
+  //TODO: передавать в функцию готовый cacheMetadata вместо файла, чтоб не вызывать тот же кеш лишний раз
+  if (!note || !headingName) {
+    return false
+  }
+
+  const cache = await globalThis.app.metadataCache.getFileCache(note);
+  if (!cache) {
+    return false
+  }
+  // TODO: убрать логи и может подумать как уменьшить проверки
+
+  const specificHeading = cache.headings?.find(h => h.heading === headingName);
+
+  if (!specificHeading) {
+    return false
+  }
+  // console.log('specificHeading:', specificHeading);
+
+  const nextHeading = cache.headings?.find(h => h.position.start.line > specificHeading.position.end.line)
+  // console.log('nextHeading:', nextHeading);
+
+  const lastSection = cache.sections?.findLast(s => s.position.start.line > specificHeading.position.end.line)
+  // console.log('lastSection', lastSection)
+
+  if (!lastSection) {
+    // there is no any sections after specific heading
+    return false
+  }
+
+  const specificSectionLimit = nextHeading?.position.start.line ?? lastSection?.position.start.line;
+
+  const isAnySectionInSpecificHeading = cache.sections?.some(s => s.type !== 'heading' && s.position.start.line > specificHeading.position.end.line && s.position.start.line <= specificSectionLimit) ?? false
+
+  // console.log('sectionInDesiredHeading', isAnySectionInSpecificHeading);
+
+  return isAnySectionInSpecificHeading;
 }
 
 export async function getDotsForDailyNote(
@@ -50,6 +90,14 @@ export async function getDotsForDailyNote(
       color: "default",
       isFilled: true,
     });
+  }
+
+  //TODO: get heading value from settings
+  const noteHasContentInSpecifiedHeading = await isSpecifiedHeadingSectionHasContent(dailyNote, 'мысли')
+  if (noteHasContentInSpecifiedHeading) {
+    dots.unshift({
+      className: "thought",
+    })
   }
 
   //TODO: get tag value from settings
