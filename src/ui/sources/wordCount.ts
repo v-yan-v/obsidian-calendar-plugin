@@ -40,30 +40,21 @@ async function isSpecifiedHeadingSectionHasContent(fileCache: CachedMetadata, he
     return false
   }
 
-  // TODO: убрать логи и может подумать как уменьшить проверки
-
   const specificHeading = fileCache.headings?.find(h => h.heading === headingName);
   if (!specificHeading) {
     return false
   }
-  // console.log('specificHeading:', specificHeading);
 
   const nextHeading = fileCache.headings?.find(h => h.position.start.line > specificHeading.position.end.line)
-  // console.log('nextHeading:', nextHeading);
-
   const lastSection = fileCache.sections?.findLast(s => s.position.start.line > specificHeading.position.end.line)
-  // console.log('lastSection', lastSection)
 
-  if (!lastSection) {
-    // there is no any sections after specific heading
+  if (!lastSection) { // there is no any sections after specified heading
     return false
   }
 
-  const specificSectionLimit = nextHeading?.position.start.line ?? lastSection?.position.start.line;
+  const specifiedSectionLimit = nextHeading?.position.start.line ?? lastSection?.position.start.line;
 
-  const isAnySectionInSpecificHeading = fileCache.sections?.some(s => s.type !== 'heading' && s.position.start.line > specificHeading.position.end.line && s.position.start.line <= specificSectionLimit) ?? false
-
-  // console.log('sectionInDesiredHeading', isAnySectionInSpecificHeading);
+  const isAnySectionInSpecificHeading = fileCache.sections?.some(s => s.type !== 'heading' && s.position.start.line > specificHeading.position.end.line && s.position.start.line <= specifiedSectionLimit) ?? false
 
   return isAnySectionInSpecificHeading;
 }
