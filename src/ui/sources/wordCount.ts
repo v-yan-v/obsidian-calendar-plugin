@@ -24,23 +24,25 @@ export async function getWordLengthAsDots(note: TFile): Promise<number> {
   return clamp(Math.floor(numDots), 1, NUM_MAX_DOTS);
 }
 
-async function isNoteHasSpecifiedTag(fileCache: CachedMetadata | null, tag: string): Promise<boolean> {
-  if (!fileCache || !tag) {
+async function isNoteHasSpecifiedTag(fileCache: CachedMetadata | null): Promise<boolean> {
+  if (!fileCache) {
     return false;
   }
 
+  const { ideaTag } = get(settings);
   const tags = getAllTags(fileCache)
-  // console.log(tags);
 
-  return tags.some(t => t === tag)
+  return tags.some(t => t === ideaTag)
 }
 
-async function isSpecifiedHeadingSectionHasContent(fileCache: CachedMetadata, headingName: string): Promise<boolean> {
-  if (!fileCache || !headingName) {
+async function isSpecifiedHeadingSectionHasContent(fileCache: CachedMetadata): Promise<boolean> {
+  if (!fileCache) {
     return false
   }
 
-  const specificHeading = fileCache.headings?.find(h => h.heading === headingName);
+  const { thoughtsHeading } = get(settings);
+  const specificHeading = fileCache.headings?.find(h => h.heading === thoughtsHeading);
+
   if (!specificHeading) {
     return false
   }
@@ -54,9 +56,7 @@ async function isSpecifiedHeadingSectionHasContent(fileCache: CachedMetadata, he
 
   const specifiedSectionLimit = nextHeading?.position.start.line ?? lastSection?.position.start.line;
 
-  const isAnySectionInSpecificHeading = fileCache.sections?.some(s => s.type !== 'heading' && s.position.start.line > specificHeading.position.end.line && s.position.start.line <= specifiedSectionLimit) ?? false
-
-  return isAnySectionInSpecificHeading;
+  return fileCache.sections?.some(s => s.type !== 'heading' && s.position.start.line > specificHeading.position.end.line && s.position.start.line <= specifiedSectionLimit) ?? false;
 }
 
 export async function getDotsForDailyNote(
@@ -78,7 +78,7 @@ export async function getDotsForDailyNote(
   const metadataCache = await globalThis.app.metadataCache.getFileCache(dailyNote);
 
   //TODO: get heading value from settings
-  const noteHasContentInSpecifiedHeading = await isSpecifiedHeadingSectionHasContent(metadataCache, 'мысли')
+  const noteHasContentInSpecifiedHeading = await isSpecifiedHeadingSectionHasContent(metadataCache)
   if (noteHasContentInSpecifiedHeading) {
     dots.unshift({
       className: "thought",
@@ -86,7 +86,7 @@ export async function getDotsForDailyNote(
   }
 
   //TODO: get tag value from settings
-  const noteHasSpecifiedTag = await isNoteHasSpecifiedTag(metadataCache, '#идея')
+  const noteHasSpecifiedTag = await isNoteHasSpecifiedTag(metadataCache)
 
   if (noteHasSpecifiedTag) {
     dots.unshift({
