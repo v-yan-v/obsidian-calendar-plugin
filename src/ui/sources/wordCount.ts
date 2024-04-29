@@ -75,18 +75,17 @@ export async function getDotsForDailyNote(
     });
   }
 
-  const metadataCache = await globalThis.app.metadataCache.getFileCache(dailyNote);
+  const { showIdeaDot, showThoughtDot } = get(settings)
+  const metadataCache = (showIdeaDot || showThoughtDot) ? await globalThis.app.metadataCache.getFileCache(dailyNote) : null
 
-  //TODO: get heading value from settings
-  const noteHasContentInSpecifiedHeading = await isSpecifiedHeadingSectionHasContent(metadataCache)
+  const noteHasContentInSpecifiedHeading = showThoughtDot && await isSpecifiedHeadingSectionHasContent(metadataCache)
   if (noteHasContentInSpecifiedHeading) {
     dots.unshift({
       className: "thought",
     })
   }
 
-  //TODO: get tag value from settings
-  const noteHasSpecifiedTag = await isNoteHasSpecifiedTag(metadataCache)
+  const noteHasSpecifiedTag = showIdeaDot && await isNoteHasSpecifiedTag(metadataCache)
 
   if (noteHasSpecifiedTag) {
     dots.unshift({
