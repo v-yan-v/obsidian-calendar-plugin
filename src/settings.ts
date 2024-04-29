@@ -18,6 +18,13 @@ export interface ISettings {
   weeklyNoteFolder: string;
 
   localeOverride: ILocaleOverride;
+
+  // Additional icons settings
+  showIdeaDot: boolean,
+  ideaTag: string,
+
+  showThoughtDot: boolean,
+  thoughtsHeading: string,
 }
 
 const weekdays = [
@@ -42,6 +49,12 @@ export const defaultSettings = Object.freeze({
   weeklyNoteFolder: "",
 
   localeOverride: "system-default",
+
+  showIdeaDot: false,
+  ideaTag: "#idea",
+
+  showThoughtDot: false,
+  thoughtsHeading: "thoughts",
 });
 
 export function appHasPeriodicNotesPluginLoaded(): boolean {
@@ -103,6 +116,22 @@ export class CalendarSettingsTab extends PluginSettingTab {
       text: "Advanced Settings",
     });
     this.addLocaleOverrideSetting();
+
+    // Additional marks
+    this.containerEl.createEl("h3", {
+      text: "Additional Marks Settings",
+    })
+    // idea tag icon
+    this.addShowIdeaDotSetting()
+    if (this.plugin.options.showIdeaDot) {
+      this.addIdeaTagNameSetting()
+    }
+
+    // thoughts section icon
+    this.addShowThoughtsIconSetting()
+    if (this.plugin.options.showThoughtDot) {
+      this.addThoughtsNameSetting()
+    }
   }
 
   addDotThresholdSetting(): void {
@@ -233,6 +262,63 @@ export class CalendarSettingsTab extends PluginSettingTab {
           this.plugin.writeOptions(() => ({
             localeOverride: value as ILocaleOverride,
           }));
+        });
+      });
+  }
+
+  addShowIdeaDotSetting(): void {
+    new Setting(this.containerEl)
+      .setName("Show Idea icon")
+      .setDesc("Enable this to add 💡 idea icon in day view")
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.options.showIdeaDot);
+        toggle.onChange(async (value) => {
+          await this.plugin.writeOptions(() => ({ showIdeaDot: value }));
+          this.display(); // show/hide weekly settings
+        });
+      });
+  }
+
+  addIdeaTagNameSetting(): void {
+    new Setting(this.containerEl)
+      .setName("Idea Tag name")
+      .setDesc("Specify the name of the tag for which the idea icon will be added")
+      .addText((textfield) => {
+        textfield.setValue(this.plugin.options.ideaTag);
+        textfield.setPlaceholder(defaultSettings.ideaTag);
+        textfield.onChange(async (value) => {
+          value = value.trim()
+          value = value.length <= 1 && value.startsWith('#') ? defaultSettings.ideaTag : value
+          value = value.length > 1 && value.startsWith("#") ? value : '#' + value
+          await this.plugin.writeOptions(() => ({ ideaTag: value }));
+        });
+      });
+  }
+
+  addShowThoughtsIconSetting(): void {
+    new Setting(this.containerEl)
+      .setName("Show Thoughts icon")
+      .setDesc("Enable this to add 🤔 thoughts icon in day view")
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.options.showThoughtDot);
+        toggle.onChange(async (value) => {
+          await this.plugin.writeOptions(() => ({ showThoughtDot: value }));
+          this.display(); // show/hide weekly settings
+        });
+      });
+  }
+
+  addThoughtsNameSetting(): void {
+    new Setting(this.containerEl)
+      .setName("Thoughts Heading name")
+      .setDesc("Specify the name of the heading for which the thought icon will be added")
+      .addText((textfield) => {
+        textfield.setValue(this.plugin.options.thoughtsHeading);
+        textfield.setPlaceholder(defaultSettings.thoughtsHeading);
+        textfield.onChange(async (value) => {
+          value = value.trim()
+          value = value.length > 0 ? value : defaultSettings.thoughtsHeading;
+          await this.plugin.writeOptions(() => ({ thoughtsHeading: value }));
         });
       });
   }
