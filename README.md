@@ -1,3 +1,9 @@
+Fork adds additional marks to the daily notes in the calendar view
+- 💡 - for notes containing the tag specified in the settings (indicating the idea)
+- 🤔 - for notes that have content in a section (heading) specified in the settings
+
+---
+
 # obsidian-calendar-plugin
 
 This plugin for [Obsidian](https://obsidian.md/) creates a simple Calendar view for visualizing and navigating between your daily notes.
